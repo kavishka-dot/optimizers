@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LossLens</title>
 <script>
-MathJax={tex:{inlineMath:[['$','$']]},options:{skipHtmlTags:['script','noscript','style','textarea']},startup:{typeset:false}};
+MathJax={tex:{inlineMath:[['$','$']]},options:{skipHtmlTags:['script','noscript','style','textarea']},chtml:{scale:1.6,minScale:1.0},startup:{typeset:false}};
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#0c0c10;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
@@ -16,24 +17,24 @@ html,body{height:100%;background:#0c0c10;color:#e0e0e0;font-family:-apple-system
 #app{display:flex;flex-direction:column;height:100vh}
 
 /* top bar */
-#topbar{display:flex;align-items:center;padding:0 18px;height:44px;border-bottom:1px solid #1c1c28;flex-shrink:0;gap:12px}
-#topbar h1{font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em}
-#topbar .sub{font-size:11px;color:#444;margin-left:4px}
+#topbar{display:flex;align-items:center;padding:0 20px;height:60px;border-bottom:1px solid #1c1c28;flex-shrink:0;gap:14px}
+#topbar h1{font-size:28px;font-weight:700;color:#fff;letter-spacing:.01em;font-family:'Space Grotesk',sans-serif;white-space:nowrap}
+#topbar .sub{font-size:13px;color:#aaa;margin-left:2px;white-space:nowrap}
 #inf{margin-left:auto;font-size:11px;color:#444;font-family:'Courier New',monospace}
 
 /* main row */
 #main{display:flex;flex:1;overflow:hidden}
 
 /* ── LEFT SIDEBAR ── */
-#sidebar{width:340px;flex-shrink:0;border-right:1px solid #1c1c28;display:flex;flex-direction:column;overflow:hidden}
+#sidebar{width:400px;flex-shrink:0;border-right:1px solid #1c1c28;display:flex;flex-direction:column;overflow:hidden}
 
 #opt-list{padding:12px 10px 8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
 #opt-list .sec{font-size:9px;color:#444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;padding-left:4px}
 
-.ob{width:100%;text-align:left;padding:9px 12px;border-radius:8px;border:none;background:#16161f;color:#999;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:9px}
+.ob{width:100%;text-align:left;padding:11px 14px;border-radius:8px;border:none;background:#16161f;color:#999;font-size:16px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:11px}
 .ob:hover{background:#1e1e2c;color:#ddd}
 .ob.active{color:#fff;font-weight:700}
-.ob .swatch{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.ob .swatch{width:16px;height:16px;border-radius:5px;flex-shrink:0}
 .ob .steps{margin-left:auto;font-size:10px;font-family:'Courier New',monospace;color:#444}
 .ob.active .steps{color:#666}
 
@@ -49,12 +50,12 @@ html,body{height:100%;background:#0c0c10;color:#e0e0e0;font-family:-apple-system
 
 .sec-label{font-size:9px;color:#444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
 
-#eq-content{line-height:2.6;font-size:17px;color:#bbb;margin-bottom:4px}
+#eq-content{line-height:3.2;font-size:17px;color:#bbb;margin-bottom:4px}
 #eq-content .eq-row{margin-bottom:2px}
-#p-note{font-size:11px;color:#3a3a4a;line-height:1.6;margin-top:8px;margin-bottom:14px;padding:8px;background:#111118;border-radius:6px;border-left:2px solid #222}
+#p-note{font-size:14px;color:#7a7a9a;line-height:1.7;margin-top:8px;margin-bottom:14px;padding:10px;background:#111118;border-radius:6px;border-left:2px solid #333}
 
 .param-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.param-row label{font-size:11px;color:#777;min-width:70px;font-family:'Courier New',monospace;flex-shrink:0}
+.param-row label{font-size:16px;color:#777;min-width:70px;flex-shrink:0}
 .param-row input[type=range]{flex:1;accent-color:#6366f1;cursor:pointer;height:3px}
 .param-row .val{font-size:11px;color:#bbb;min-width:46px;text-align:right;font-family:'Courier New',monospace}
 
@@ -77,6 +78,24 @@ html,body{height:100%;background:#0c0c10;color:#e0e0e0;font-family:-apple-system
 
   <!-- TOP BAR -->
   <div id="topbar">
+    <svg width="38" height="38" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;overflow:visible">
+      <defs>
+        <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#1e1e3a"/>
+          <stop offset="100%" stop-color="#0c0c18"/>
+        </radialGradient>
+      </defs>
+      <circle cx="15" cy="15" r="14" fill="url(#bg)" stroke="#2a2a4a" stroke-width="0.5"/>
+      <ellipse cx="15" cy="15" rx="12" ry="8"  fill="none" stroke="#1a3a2a" stroke-width="0.8"/>
+      <ellipse cx="15" cy="15" rx="9"  ry="5.5" fill="none" stroke="#1e4a30" stroke-width="0.8"/>
+      <ellipse cx="15" cy="15" rx="6"  ry="3.5" fill="none" stroke="#236640" stroke-width="0.8"/>
+      <ellipse cx="15" cy="15" rx="3.5" ry="2"  fill="none" stroke="#2a8850" stroke-width="0.8"/>
+      <polyline points="4,6 8,9 11,12 13,14 14.5,14.8" fill="none" stroke="#facc15" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="26,5 22,8 18,11 16,13 14.8,14.6" fill="none" stroke="#fb923c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="6,24 9,20 12,17 14,15.5 14.6,15" fill="none" stroke="#f472b6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="15" cy="15" r="2.2" fill="#fff"/>
+      <circle cx="15" cy="15" r="1.4" fill="#a78bfa"/>
+    </svg>
     <h1>LossLens</h1>
     <span class="sub">optimizer descent visualizer</span>
     <div id="inf">click the canvas to drop a particle</div>
