@@ -408,7 +408,7 @@ function tick(){
   updateStepCounts();
   const done=particles.filter(p=>p.done).length;
   if(particles.length){
-    document.getElementById('inf').textContent=`${done}/${particles.length} converged  —  ${particles.map(p=>`${OL[p.opt].split(' ')[0]} ${p.steps}${p.done?'✓':''}`).join('  ')}`;
+    document.getElementById('inf').textContent=`${done}/${particles.length} converged`;
   }
   if(any)animId=requestAnimationFrame(tick);else animId=null;
 }
