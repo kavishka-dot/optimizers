@@ -297,7 +297,7 @@ function rebuildSurface(){
   vals=new Float32Array(W*H);mn=Infinity;mx=-Infinity;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=f(x,y);vals[y*W+x]=v;if(v<mn)mn=v;if(v>mx)mx=v;}
   function colormap(t){
-    const cp=[[0,[8,20,80]],[0.15,[20,80,160]],[0.30,[30,160,180]],[0.45,[50,190,100]],[0.55,[130,210,50]],[0.65,[220,220,30]],[0.78,[240,140,20]],[0.90,[220,60,20]],[1.0,[180,20,20]]];
+    const cp=[[0,[6,15,60]],[0.15,[15,60,120]],[0.30,[23,120,135]],[0.45,[38,143,75]],[0.55,[98,158,38]],[0.65,[165,165,23]],[0.78,[180,105,15]],[0.90,[165,45,15]],[1.0,[135,15,15]]];
     let i=0;while(i<cp.length-2&&t>cp[i+1][0])i++;
     const lo=cp[i],hi=cp[i+1],s=(t-lo[0])/(hi[0]-lo[0]);
     return[Math.round(lo[1][0]+(hi[1][0]-lo[1][0])*s),Math.round(lo[1][1]+(hi[1][1]-lo[1][1])*s),Math.round(lo[1][2]+(hi[1][2]-lo[1][2])*s)];
@@ -309,8 +309,8 @@ function rebuildSurface(){
   const N=24;
   for(let ci=0;ci<N;ci++){
     const lv=mn+(mx-mn)*(ci/(N-1)),t=ci/(N-1);
-    ox.strokeStyle=t<0.4?'rgba(255,255,255,0.15)':'rgba(0,0,0,0.18)';
-    ox.lineWidth=ci%4===0?1.2:0.45;
+    ox.strokeStyle=t<0.4?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.35)';
+    ox.lineWidth=ci%4===0?1.0:0.35;
     for(let y=1;y<H-1;y+=2){
       let inLine=false;
       for(let x=0;x<W;x++){
@@ -365,20 +365,22 @@ function draw(){
   for(const p of particles){
     if(p.trail.length<2)continue;
     const col=OC[p.opt];
-    ctx.shadowColor=col;ctx.shadowBlur=5;
+    ctx.shadowColor=col;ctx.shadowBlur=14;
     ctx.beginPath();ctx.moveTo(p.trail[0].x,p.trail[0].y);
     for(let i=1;i<p.trail.length;i++)ctx.lineTo(p.trail[i].x,p.trail[i].y);
-    ctx.strokeStyle=col+'bb';ctx.lineWidth=2;ctx.stroke();
+    ctx.strokeStyle=col;ctx.lineWidth=3.5;ctx.stroke();
     ctx.shadowBlur=0;
     const last=p.trail[p.trail.length-1];
     if(p.done){
-      ctx.beginPath();ctx.arc(last.x,last.y,8,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
-      ctx.beginPath();ctx.arc(last.x,last.y,5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+      ctx.beginPath();ctx.arc(last.x,last.y,11,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+      ctx.beginPath();ctx.arc(last.x,last.y,7,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
     } else {
-      ctx.beginPath();ctx.arc(last.x,last.y,4,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+      ctx.shadowColor=col;ctx.shadowBlur=10;
+      ctx.beginPath();ctx.arc(last.x,last.y,6,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+      ctx.shadowBlur=0;
     }
-    ctx.beginPath();ctx.arc(p.trail[0].x,p.trail[0].y,3,0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fill();
+    ctx.beginPath();ctx.arc(p.trail[0].x,p.trail[0].y,4,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fill();
   }
 }
 
