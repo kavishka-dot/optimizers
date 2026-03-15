@@ -1,8 +1,8 @@
-# 🔭 LossLens
+ # 🔭 LossLens
 
 **An interactive 2D loss surface visualizer for comparing gradient-based optimizers.**
 
-Drop a particle anywhere on the surface and watch it descend in real time, with full control over every hyperparameter. Compare trajectories from Gradient Descent, Momentum, AdaGrad, Adam, Sofia, and Lion side by side on a richly structured surface with flat basins, saddle points, local minima, and noise.
+Drop a particle anywhere on the surface and watch it descend in real time — with full control over every hyperparameter. Compare trajectories from Gradient Descent, Momentum, AdaGrad, Adam, Sofia, and Lion side by side on a richly structured surface with flat basins, saddle points, local minima, and noise.
 
 🌐 **Live demo:** [kavishka-dot.github.io/optimizer](https://kavishka-dot.github.io/optimizer)
 
@@ -13,9 +13,9 @@ Drop a particle anywhere on the surface and watch it descend in real time, with 
 - Colorful contour plot of a hand-crafted 2D loss surface
 - Six optimizers with fully tunable hyperparameters via sliders
 - LaTeX-rendered update rule equations for each optimizer
-- Particles run until ‖∇f‖ ≈ 0, revealing noisy crawls in flat regions
+- Particles run until ‖∇f‖ ≈ 0 — revealing noisy crawls in flat regions
 - Multiple particles overlaid simultaneously for direct comparison
-- Zero dependencies, single self-contained HTML file
+- Zero dependencies — single self-contained HTML file
 
 ---
 
@@ -29,11 +29,11 @@ $$
 
 where $\eta(x,y)$ is multi-octave smooth noise generated via a seeded LCG and bicubic interpolation. Key features of the surface:
 
-- **2 maxima**, bright peaks that act as repellers
-- **3 minima**, one deep global minimum (wide, flat basin), two sharp local minima
-- **Saddle point**, a ridge in one direction, valley in another
-- **Banana valley**, elongated curved trough that traps momentum-based methods
-- **Smooth noise**, perturbs gradients so trajectories are never clean, exposing optimizer sensitivity
+- **2 maxima** — bright peaks that act as repellers
+- **3 minima** — one deep global minimum (wide, flat basin), two sharp local minima
+- **Saddle point** — a ridge in one direction, valley in another
+- **Banana valley** — elongated curved trough that traps momentum-based methods
+- **Smooth noise** — perturbs gradients so trajectories are never clean, exposing optimizer sensitivity
 
 Gradients are computed numerically via central differences:
 
@@ -89,7 +89,7 @@ $$
 
 **Hyperparameters:** $\eta$ (learning rate), $\varepsilon$ (numerical stability constant)
 
-**Behavior:** Works well on sparse problems. However $G$ grows monotonically, causing the effective learning rate to shrink to zero over time, the optimizer stalls in flat regions.
+**Behavior:** Works well on sparse problems. However $G$ grows monotonically, causing the effective learning rate to shrink to zero over time — the optimizer stalls in flat regions.
 
 ---
 
@@ -164,7 +164,7 @@ $$
 \|\nabla f(\theta)\| < \epsilon_{\text{conv}} = 8 \times 10^{-4} \quad \text{or} \quad t \geq 8000
 $$
 
-This means particles in flat basins will jitter visibly for many steps before the gradient fully vanishes, which is the whole point. You can directly observe which optimizers handle flat regions gracefully.
+This means particles in flat basins will jitter visibly for many steps before the gradient fully vanishes — which is the whole point. You can directly observe which optimizers handle flat regions gracefully.
 
 ---
 
@@ -182,7 +182,7 @@ Each particle snapshots the hyperparameter values at spawn time, so mid-run edit
 
 ## Deployment
 
-Single HTML file, no build step, no server, no dependencies.
+Single HTML file — no build step, no server, no dependencies.
 
 ```bash
 # Clone and open locally
