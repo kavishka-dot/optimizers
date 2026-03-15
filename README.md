@@ -1,8 +1,8 @@
- # 🔭 LossLens
+# 🔭 LossLens
 
 **An interactive 2D loss surface visualizer for comparing gradient-based optimizers.**
 
-Drop a particle anywhere on the surface and watch it descend in real time — with full control over every hyperparameter. Compare trajectories from Gradient Descent, Momentum, AdaGrad, Adam, Sofia, and Lion side by side on a richly structured surface with flat basins, saddle points, local minima, and noise.
+Drop a particle anywhere on the surface and watch it descend in real time , with full control over every hyperparameter. Compare trajectories from Gradient Descent, Momentum, AdaGrad, Adam, Sofia, and Lion side by side on a richly structured surface with flat basins, saddle points, local minima, and noise.
 
 🌐 **Live demo:** [kavishka-dot.github.io/optimizer](https://kavishka-dot.github.io/optimizer)
 
@@ -12,147 +12,160 @@ Drop a particle anywhere on the surface and watch it descend in real time — wi
 
 - Colorful contour plot of a hand-crafted 2D loss surface
 - Six optimizers with fully tunable hyperparameters via sliders
-- LaTeX-rendered update rule equations for each optimizer
-- Particles run until ‖∇f‖ ≈ 0 — revealing noisy crawls in flat regions
+- LaTeX-rendered update rule equations for each optimizer (rendered in-app via MathJax)
+- Particles run until `‖∇f‖ ≈ 0` , revealing noisy crawls in flat regions
 - Multiple particles overlaid simultaneously for direct comparison
-- Zero dependencies — single self-contained HTML file
+- Zero dependencies , single self-contained HTML file
 
 ---
 
 ## The Loss Surface
 
-The surface $f : \mathbb{R}^2 \to \mathbb{R}$ is defined as a sum of Gaussian bumps, a saddle, an elongated banana valley, and smooth procedural noise:
+The surface is a sum of Gaussian bumps, a saddle, an elongated banana valley, and smooth procedural noise. In compact form:
 
-$$
-f(x, y) = \underbrace{\sum_{i} A_i \exp\!\left(-\frac{(x-x_i)^2}{\sigma_{xi}} - \frac{(y-y_i)^2}{\sigma_{yi}}\right)}_{\text{maxima \& minima}} + \underbrace{B\,e^{-\alpha y^2} e^{-\beta x^2}}_{\text{saddle}} + \underbrace{C\,e^{-\gamma(x - \delta y)^2}}_{\text{banana valley}} + \eta(x,y)
-$$
+```
+f(x, y) = Σ Aᵢ · exp(-(x-xᵢ)²/σxᵢ - (y-yᵢ)²/σyᵢ)   ← maxima & minima
+         + B · exp(-α·y²) · exp(-β·x²)                  ← saddle
+         + C · exp(-γ·(x - δy)²)                         ← banana valley
+         + η(x, y)                                        ← smooth noise
+```
 
-where $\eta(x,y)$ is multi-octave smooth noise generated via a seeded LCG and bicubic interpolation. Key features of the surface:
+Gradients are computed numerically via **central differences**:
 
-- **2 maxima** — bright peaks that act as repellers
-- **3 minima** — one deep global minimum (wide, flat basin), two sharp local minima
-- **Saddle point** — a ridge in one direction, valley in another
-- **Banana valley** — elongated curved trough that traps momentum-based methods
-- **Smooth noise** — perturbs gradients so trajectories are never clean, exposing optimizer sensitivity
+```
+∂f/∂x ≈ (f(x+ε, y) - f(x-ε, y)) / 2ε
+∂f/∂y ≈ (f(x, y+ε) - f(x, y-ε)) / 2ε
+```
 
-Gradients are computed numerically via central differences:
+Key surface features:
 
-$$
-\nabla f(x, y) \approx \left( \frac{f(x+\epsilon,\,y) - f(x-\epsilon,\,y)}{2\epsilon},\; \frac{f(x,\,y+\epsilon) - f(x,\,y-\epsilon)}{2\epsilon} \right)
-$$
+| Feature | Description |
+|---|---|
+| 2 maxima | Bright peaks acting as repellers |
+| 1 global minimum | Deep, wide, flat basin , hard for GD to escape once inside |
+| 2 local minima | Sharp wells that trap naive optimizers |
+| Saddle point | Ridge in x, valley in y , reveals optimizer sensitivity to curvature |
+| Banana valley | Curved elongated trough , causes momentum oscillation |
+| Smooth noise | Multi-octave LCG noise perturbs gradients throughout |
 
 ---
 
 ## Optimizers
 
-### Vanilla Gradient Descent (GD)
+### 1. Vanilla Gradient Descent (GD)
 
-The baseline. At each step, move in the direction of steepest descent by a fixed learning rate $\eta$.
+The baseline. Move in the direction of steepest descent by a fixed learning rate `η`.
 
-$$
-\theta \leftarrow \theta - \eta\,\nabla f(\theta)
-$$
+```
+θ ← θ - η · ∇f(θ)
+```
 
-**Hyperparameters:** $\eta$ (learning rate)
+| Parameter | Symbol | Default |
+|---|---|---|
+| Learning rate | η | 9.0 |
 
-**Behavior:** Straight descent, easily trapped in local minima and saddle points. Stalls immediately in flat basins where $\|\nabla f\| \approx 0$.
-
----
-
-### Momentum
-
-Augments GD with a velocity term $v$ that accumulates gradient history, allowing the optimizer to roll through local curvature.
-
-$$
-v \leftarrow \mu v - \eta\,\nabla f(\theta)
-$$
-$$
-\theta \leftarrow \theta + v
-$$
-
-**Hyperparameters:** $\eta$ (learning rate), $\mu \in [0,1)$ (momentum coefficient)
-
-**Behavior:** Overshoots on curved surfaces and oscillates in narrow valleys, but escapes shallow basins that trap GD. Higher $\mu$ gives more inertia.
+**Behavior:** Straight cautious descent. Easily trapped in local minima and saddle points. Stalls in flat basins where `‖∇f‖ ≈ 0`.
 
 ---
 
-### AdaGrad
+### 2. Momentum
 
-Adapts the learning rate per dimension by accumulating squared gradients in $G$. Dimensions with large historical gradients receive smaller updates.
+Augments GD with a velocity term `v` that accumulates gradient history.
 
-$$
-G \leftarrow G + \nabla f(\theta)^2
-$$
-$$
-\theta \leftarrow \theta - \frac{\eta}{\sqrt{G} + \varepsilon}\,\nabla f(\theta)
-$$
+```
+v ← μ·v - η·∇f(θ)
+θ ← θ + v
+```
 
-**Hyperparameters:** $\eta$ (learning rate), $\varepsilon$ (numerical stability constant)
+| Parameter | Symbol | Default |
+|---|---|---|
+| Learning rate | η | 9.0 |
+| Momentum coefficient | μ | 0.88 |
 
-**Behavior:** Works well on sparse problems. However $G$ grows monotonically, causing the effective learning rate to shrink to zero over time — the optimizer stalls in flat regions.
-
----
-
-### Adam
-
-Combines momentum (first moment $m$) with adaptive per-dimension scaling (second moment $v$), with bias correction for early steps.
-
-$$
-m \leftarrow \beta_1 m + (1 - \beta_1)\,\nabla f(\theta)
-$$
-$$
-v \leftarrow \beta_2 v + (1 - \beta_2)\,\nabla f(\theta)^2
-$$
-$$
-\hat{m} = \frac{m}{1 - \beta_1^t}, \qquad \hat{v} = \frac{v}{1 - \beta_2^t}
-$$
-$$
-\theta \leftarrow \theta - \eta\,\frac{\hat{m}}{\sqrt{\hat{v}} + \varepsilon}
-$$
-
-**Hyperparameters:** $\eta$, $\beta_1$ (first moment decay), $\beta_2$ (second moment decay), $\varepsilon$
-
-**Behavior:** The most robust optimizer in practice. Bias correction prevents large steps early in training. Navigates saddles and flat regions better than GD or AdaGrad. Default: $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\varepsilon = 10^{-7}$.
+**Behavior:** Overshoots on curved surfaces and oscillates in narrow valleys, but escapes shallow basins that trap GD. Higher `μ` gives more inertia.
 
 ---
 
-### Sofia (Scalar)
+### 3. AdaGrad
 
-A simplified version of the Sofia optimizer that approximates the diagonal Hessian using an exponential moving average of past gradients, then clips large steps by a threshold $\rho$.
+Adapts the learning rate per dimension by accumulating squared gradients in `G`.
 
-$$
-m \leftarrow \beta m + (1 - \beta)\,\nabla f(\theta)
-$$
-$$
-h = |m| \qquad \text{(diagonal Hessian proxy)}
-$$
-$$
-\theta \leftarrow \theta - \mathrm{clip}\!\left(\frac{\eta\,\nabla f(\theta)}{h},\; \rho\right)
-$$
+```
+G ← G + ∇f(θ)²
+θ ← θ - (η / (√G + ε)) · ∇f(θ)
+```
 
-**Hyperparameters:** $\eta$, $\beta$ (EMA coefficient), $\rho$ (clip threshold)
+| Parameter | Symbol | Default |
+|---|---|---|
+| Learning rate | η | 9.0 |
+| Stability constant | ε | 1e-6 |
 
-**Behavior:** Scales updates by curvature information, producing more controlled trajectories on curved surfaces. The clip threshold prevents instability in low-curvature flat regions.
+**Behavior:** Dimensions with historically large gradients receive smaller updates. `G` grows monotonically though, causing the effective learning rate to decay to zero , stalls in flat regions.
 
 ---
 
-### Lion
+### 4. Adam
 
-A recently proposed optimizer (Chen et al., 2023) that uses only the **sign** of a momentum-interpolated gradient as the update direction, giving every step a constant magnitude of exactly $\eta$.
+Combines momentum (first moment `m`) with adaptive per-dimension scaling (second moment `v`), with bias correction for early steps.
 
-$$
-c = \mathrm{sign}\!\left(\beta_1 m + (1 - \beta_1)\,\nabla f(\theta)\right)
-$$
-$$
-\theta \leftarrow \theta - \eta\,c
-$$
-$$
-m \leftarrow \beta_2 m + (1 - \beta_2)\,\nabla f(\theta)
-$$
+```
+m ← β₁·m + (1 - β₁)·∇f(θ)
+v ← β₂·v + (1 - β₂)·∇f(θ)²
 
-**Hyperparameters:** $\eta$, $\beta_1$ (interpolation for update), $\beta_2$ (momentum decay)
+m̂ = m / (1 - β₁ᵗ)
+v̂ = v / (1 - β₂ᵗ)
 
-**Behavior:** Produces angular, blocky trajectories because the step magnitude is always $\pm\eta$ per dimension. Memory-efficient (only stores $m$, not $v$). The sign-only update can be surprisingly effective and is noticeably different visually.
+θ ← θ - η · m̂ / (√v̂ + ε)
+```
+
+| Parameter | Symbol | Default |
+|---|---|---|
+| Learning rate | η | 9.0 |
+| First moment decay | β₁ | 0.900 |
+| Second moment decay | β₂ | 0.999 |
+| Stability constant | ε | 1e-7 |
+
+**Behavior:** Most robust optimizer in practice. Bias correction prevents overshooting early in training. Navigates saddles and flat regions better than GD or AdaGrad.
+
+---
+
+### 5. Sofia (Scalar)
+
+Approximates the diagonal Hessian using an EMA of past gradients, then clips large steps.
+
+```
+m ← β·m + (1 - β)·∇f(θ)
+h = |m|                              ← diagonal Hessian proxy
+θ ← θ - clip(η·∇f(θ) / h, ρ)
+```
+
+| Parameter | Symbol | Default |
+|---|---|---|
+| Learning rate | η | 9.0 |
+| EMA coefficient | β | 0.900 |
+| Clip threshold | ρ | 18 |
+
+**Behavior:** Scales updates by curvature, producing tighter controlled trajectories on curved surfaces. Clipping prevents instability in low-curvature flat regions.
+
+---
+
+### 6. Lion
+
+Uses only the **sign** of a momentum-interpolated gradient as the update direction. Every step has constant magnitude `η`.
+
+```
+c = sign(β₁·m + (1 - β₁)·∇f(θ))
+θ ← θ - η·c
+m ← β₂·m + (1 - β₂)·∇f(θ)
+```
+
+| Parameter | Symbol | Default |
+|---|---|---|
+| Learning rate | η | 9.0 |
+| Interpolation coeff | β₁ | 0.900 |
+| Momentum decay | β₂ | 0.990 |
+
+**Behavior:** Produces angular, blocky trajectories since step magnitude is always exactly `±η` per dimension. Memory-efficient , stores only `m`, not `v`. The sign-only update is visually distinctive and surprisingly effective.
 
 ---
 
@@ -160,11 +173,11 @@ $$
 
 Each particle runs until the gradient magnitude falls below a threshold or a step cap is hit:
 
-$$
-\|\nabla f(\theta)\| < \epsilon_{\text{conv}} = 8 \times 10^{-4} \quad \text{or} \quad t \geq 8000
-$$
+```
+stop when:  ‖∇f(θ)‖ < 8×10⁻⁴   OR   steps ≥ 8000
+```
 
-This means particles in flat basins will jitter visibly for many steps before the gradient fully vanishes — which is the whole point. You can directly observe which optimizers handle flat regions gracefully.
+Particles in flat basins jitter visibly for many steps before the gradient fully vanishes , directly exposing which optimizers handle flat regions gracefully.
 
 ---
 
@@ -182,25 +195,26 @@ Each particle snapshots the hyperparameter values at spawn time, so mid-run edit
 
 ## Deployment
 
-Single HTML file — no build step, no server, no dependencies.
+Single HTML file , no build step, no server, no dependencies.
 
 ```bash
-# Clone and open locally
 git clone https://github.com/kavishka-dot/optimizer.git
 open optimizer/index.html
 ```
 
-Or deploy to GitHub Pages by pushing `index.html` and enabling Pages in repository Settings.
+Or push `index.html` to a GitHub repo and enable GitHub Pages under **Settings → Pages → Branch: main**.
+
+Live at: `https://<your-username>.github.io/<repo-name>`
 
 ---
 
 ## References
 
 - Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors. *Nature*.
-- Duchi, J., Hazan, E., & Singer, Y. (2011). Adaptive subgradient methods. *JMLR*.
-- Kingma, D. P., & Ba, J. (2015). Adam: A method for stochastic optimization. *ICLR*.
-- Liu, H., et al. (2023). Sophia: A scalable stochastic second-order optimizer. *arXiv:2305.14342*.
-- Chen, X., et al. (2023). Symbolic discovery of optimization algorithms. *arXiv:2302.06675*. (Lion)
+- Duchi, J., Hazan, E., & Singer, Y. (2011). Adaptive subgradient methods for online learning. *JMLR*.
+- Kingma, D. P., & Ba, J. (2015). Adam: A method for stochastic optimization. *ICLR 2015*. [arXiv:1412.6980](https://arxiv.org/abs/1412.6980)
+- Liu, H., et al. (2023). Sophia: A scalable stochastic second-order optimizer. [arXiv:2305.14342](https://arxiv.org/abs/2305.14342)
+- Chen, X., et al. (2023). Symbolic discovery of optimization algorithms (Lion). [arXiv:2302.06675](https://arxiv.org/abs/2302.06675)
 
 ---
 
