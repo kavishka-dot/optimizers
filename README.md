@@ -1,112 +1,209 @@
-# SDE Diffusion Simulator
+# 🔭 LossLens
 
-An interactive, browser-based simulator for understanding stochastic differential equations (SDEs) and diffusion probabilistic models. Built as a single self-contained HTML file with no backend or build step required.
+**An interactive 2D loss surface visualizer for comparing gradient-based optimizers.**
 
-**Live demo:** [kavishka-dot.github.io/sde_simulations](https://kavishka-dot.github.io/sde_simulations)
+Drop a particle anywhere on the surface and watch it descend in real time, with full control over every hyperparameter. Compare trajectories from Gradient Descent, Momentum, AdaGrad, Adam, Sofia, and Lion side by side on a richly structured surface with flat basins, saddle points, local minima, and noise.
 
----
-
-## Overview
-
-This tool bridges the gap between the abstract mathematics of Ito calculus and the practical mechanics of modern diffusion models (DDPM, DDIM, score-based generative models). All three tabs are interactive and equation-driven, with live MathJax rendering throughout.
+🌐 **Live demo:** [kavishka-dot.github.io/optimizer](https://kavishka-dot.github.io/optimizer)
 
 ---
 
 ## Features
 
-### Tab 1: Diffusion Paths
-
-Simulates 2D Ito stochastic differential equations in real time.
-
-$$dX_t = \mu \, dt + \sigma \, dW_t$$
-
-- Click anywhere on the canvas to place an origin point
-- 100 Brownian motion paths are simulated forward from each origin
-- Adjust drift ($\mu$), diffusion coefficient ($\sigma$), number of steps ($T$), and time step ($dt$) via sliders
-- Multiple origins can be placed simultaneously; resimulate reruns all with updated parameters
-- Live statistics: origin count, total paths, endpoint spread, total time
-
-### Tab 2: Image Diffusion (Forward Process)
-
-Visualises the DDPM forward noising process on a user-drawn image.
-
-$$dX_t = -\tfrac{1}{2}\beta(t) X_t \, dt + \sqrt{\beta(t)} \, dW_t \qquad \Rightarrow \qquad X_t | X_0 \sim \mathcal{N}\!\left(\sqrt{\bar\alpha_t} X_0,\ (1 - \bar\alpha_t)I\right)$$
-
-- Draw directly on the canvas with a colour palette, pen, eraser, and adjustable brush size
-- Click **Generate Diffusion** to produce 9 independent noisy trajectories at 10 evenly-spaced timesteps
-- A 10th cell shows the **Monte Carlo mean** image, averaged over $N$ independent noise draws (configurable from 10 to 500)
-- As $N \to \infty$, noise cancels and only $\sqrt{\bar\alpha_t} X_0$ survives, demonstrating the marginal mean analytically
-- Scrub through timesteps with the slider; all 10 cells update simultaneously
-- Configurable noise schedule: $\beta_0$, $\beta_T$, $T$, and $N_\text{avg}$
-
-### Tab 3: Oracle Denoising (Reverse Process)
-
-Demonstrates the closed-form oracle denoiser, the theoretical upper bound on reconstruction quality.
-
-$$\hat{X}_0 = \frac{X_t - \sqrt{1 - \bar\alpha_t}\, \varepsilon}{\sqrt{\bar\alpha_t}}$$
-
-- Full drawing canvas identical to Tab 2, with the same tools and colour palette
-- Slide the noise level $t$ to corrupt $X_0$ into $X_t$ and immediately recover $\hat{X}_0$
-- Three-panel display: **Original** $X_0$ | **Noisy** $X_t$ | **Denoised** $\hat{X}_0$
-- Since the true noise $\varepsilon$ is known exactly, the oracle achieves perfect inversion (PSNR $\to \infty$), illustrating why a real model must learn to estimate $\varepsilon$ from $X_t$ alone
-- Timestep strip showing $X_t$ at 11 evenly-spaced noise levels, from clean to fully corrupted
-- MSE curve plotting $1 - \bar\alpha_t$ vs $t$ with a live marker tracking the current slider position
-- Sidebar statistics: $\bar\alpha(t)$, SNR (dB), PSNR, MSE
-- **"Use current drawing"** button copies the drawing from Tab 2 directly into Tab 3
+- Colorful contour plot of a hand-crafted 2D loss surface
+- Six optimizers with fully tunable hyperparameters via sliders
+- LaTeX-rendered update rule equations for each optimizer
+- Particles run until ‖∇f‖ ≈ 0, revealing noisy crawls in flat regions
+- Multiple particles overlaid simultaneously for direct comparison
+- Zero dependencies, single self-contained HTML file
 
 ---
 
-## Mathematical Background
+## The Loss Surface
 
-The forward process of a diffusion model is an Ito SDE that gradually corrupts data into Gaussian noise. The DDPM forward SDE has a closed-form marginal:
+The surface $f : \mathbb{R}^2 \to \mathbb{R}$ is defined as a sum of Gaussian bumps, a saddle, an elongated banana valley, and smooth procedural noise:
 
-$$X_t | X_0 \sim \mathcal{N}\!\left(\sqrt{\bar\alpha_t} X_0,\ (1 - \bar\alpha_t)I\right), \qquad \bar\alpha_t = \prod_{s=1}^{t}(1 - \beta_s)$$
+$$
+f(x, y) = \underbrace{\sum_{i} A_i \exp\!\left(-\frac{(x-x_i)^2}{\sigma_{xi}} - \frac{(y-y_i)^2}{\sigma_{yi}}\right)}_{\text{maxima \& minima}} + \underbrace{B\,e^{-\alpha y^2} e^{-\beta x^2}}_{\text{saddle}} + \underbrace{C\,e^{-\gamma(x - \delta y)^2}}_{\text{banana valley}} + \eta(x,y)
+$$
 
-The oracle denoiser uses knowledge of the true noise $\varepsilon \sim \mathcal{N}(0, I)$ to exactly invert this corruption. A trained diffusion model approximates this oracle by learning $\varepsilon_\theta(X_t, t) \approx \varepsilon$, which is what enables generation from pure noise.
+where $\eta(x,y)$ is multi-octave smooth noise generated via a seeded LCG and bicubic interpolation. Key features of the surface:
+
+- **2 maxima**, bright peaks that act as repellers
+- **3 minima**, one deep global minimum (wide, flat basin), two sharp local minima
+- **Saddle point**, a ridge in one direction, valley in another
+- **Banana valley**, elongated curved trough that traps momentum-based methods
+- **Smooth noise**, perturbs gradients so trajectories are never clean, exposing optimizer sensitivity
+
+Gradients are computed numerically via central differences:
+
+$$
+\nabla f(x, y) \approx \left( \frac{f(x+\epsilon,\,y) - f(x-\epsilon,\,y)}{2\epsilon},\; \frac{f(x,\,y+\epsilon) - f(x,\,y-\epsilon)}{2\epsilon} \right)
+$$
 
 ---
 
-## Tech Stack
+## Optimizers
 
-| Concern | Solution |
-|---|---|
-| Rendering | Vanilla HTML5 Canvas API |
-| Mathematics | MathJax 3 (`tex-svg.js`) |
-| Typography | Inter + JetBrains Mono (Google Fonts) |
-| Random sampling | Box-Muller transform for $\mathcal{N}(0,1)$ draws |
-| Deployment | Single `.html` file, GitHub Pages |
+### Vanilla Gradient Descent (GD)
 
-No frameworks, no build tools, no dependencies beyond CDN-loaded MathJax and Google Fonts.
+The baseline. At each step, move in the direction of steepest descent by a fixed learning rate $\eta$.
+
+$$
+\theta \leftarrow \theta - \eta\,\nabla f(\theta)
+$$
+
+**Hyperparameters:** $\eta$ (learning rate)
+
+**Behavior:** Straight descent, easily trapped in local minima and saddle points. Stalls immediately in flat basins where $\|\nabla f\| \approx 0$.
+
+---
+
+### Momentum
+
+Augments GD with a velocity term $v$ that accumulates gradient history, allowing the optimizer to roll through local curvature.
+
+$$
+v \leftarrow \mu v - \eta\,\nabla f(\theta)
+$$
+$$
+\theta \leftarrow \theta + v
+$$
+
+**Hyperparameters:** $\eta$ (learning rate), $\mu \in [0,1)$ (momentum coefficient)
+
+**Behavior:** Overshoots on curved surfaces and oscillates in narrow valleys, but escapes shallow basins that trap GD. Higher $\mu$ gives more inertia.
+
+---
+
+### AdaGrad
+
+Adapts the learning rate per dimension by accumulating squared gradients in $G$. Dimensions with large historical gradients receive smaller updates.
+
+$$
+G \leftarrow G + \nabla f(\theta)^2
+$$
+$$
+\theta \leftarrow \theta - \frac{\eta}{\sqrt{G} + \varepsilon}\,\nabla f(\theta)
+$$
+
+**Hyperparameters:** $\eta$ (learning rate), $\varepsilon$ (numerical stability constant)
+
+**Behavior:** Works well on sparse problems. However $G$ grows monotonically, causing the effective learning rate to shrink to zero over time, the optimizer stalls in flat regions.
+
+---
+
+### Adam
+
+Combines momentum (first moment $m$) with adaptive per-dimension scaling (second moment $v$), with bias correction for early steps.
+
+$$
+m \leftarrow \beta_1 m + (1 - \beta_1)\,\nabla f(\theta)
+$$
+$$
+v \leftarrow \beta_2 v + (1 - \beta_2)\,\nabla f(\theta)^2
+$$
+$$
+\hat{m} = \frac{m}{1 - \beta_1^t}, \qquad \hat{v} = \frac{v}{1 - \beta_2^t}
+$$
+$$
+\theta \leftarrow \theta - \eta\,\frac{\hat{m}}{\sqrt{\hat{v}} + \varepsilon}
+$$
+
+**Hyperparameters:** $\eta$, $\beta_1$ (first moment decay), $\beta_2$ (second moment decay), $\varepsilon$
+
+**Behavior:** The most robust optimizer in practice. Bias correction prevents large steps early in training. Navigates saddles and flat regions better than GD or AdaGrad. Default: $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\varepsilon = 10^{-7}$.
+
+---
+
+### Sofia (Scalar)
+
+A simplified version of the Sofia optimizer that approximates the diagonal Hessian using an exponential moving average of past gradients, then clips large steps by a threshold $\rho$.
+
+$$
+m \leftarrow \beta m + (1 - \beta)\,\nabla f(\theta)
+$$
+$$
+h = |m| \qquad \text{(diagonal Hessian proxy)}
+$$
+$$
+\theta \leftarrow \theta - \mathrm{clip}\!\left(\frac{\eta\,\nabla f(\theta)}{h},\; \rho\right)
+$$
+
+**Hyperparameters:** $\eta$, $\beta$ (EMA coefficient), $\rho$ (clip threshold)
+
+**Behavior:** Scales updates by curvature information, producing more controlled trajectories on curved surfaces. The clip threshold prevents instability in low-curvature flat regions.
+
+---
+
+### Lion
+
+A recently proposed optimizer (Chen et al., 2023) that uses only the **sign** of a momentum-interpolated gradient as the update direction, giving every step a constant magnitude of exactly $\eta$.
+
+$$
+c = \mathrm{sign}\!\left(\beta_1 m + (1 - \beta_1)\,\nabla f(\theta)\right)
+$$
+$$
+\theta \leftarrow \theta - \eta\,c
+$$
+$$
+m \leftarrow \beta_2 m + (1 - \beta_2)\,\nabla f(\theta)
+$$
+
+**Hyperparameters:** $\eta$, $\beta_1$ (interpolation for update), $\beta_2$ (momentum decay)
+
+**Behavior:** Produces angular, blocky trajectories because the step magnitude is always $\pm\eta$ per dimension. Memory-efficient (only stores $m$, not $v$). The sign-only update can be surprisingly effective and is noticeably different visually.
+
+---
+
+## Convergence Criterion
+
+Each particle runs until the gradient magnitude falls below a threshold or a step cap is hit:
+
+$$
+\|\nabla f(\theta)\| < \epsilon_{\text{conv}} = 8 \times 10^{-4} \quad \text{or} \quad t \geq 8000
+$$
+
+This means particles in flat basins will jitter visibly for many steps before the gradient fully vanishes, which is the whole point. You can directly observe which optimizers handle flat regions gracefully.
 
 ---
 
 ## Usage
 
-### Run locally
+1. Select an optimizer from the left sidebar
+2. Adjust hyperparameters with the sliders
+3. Click anywhere on the surface to drop a particle
+4. Repeat with a different optimizer from the same starting point to compare trajectories
+5. Press **clear** to reset
 
-```bash
-git clone https://github.com/kavishka-dot/sde_simulations.git
-cd sde_simulations
-# Open in browser — no server needed
-open index.html
-```
-
-### Deploy
-
-The repository is configured for GitHub Pages. Any push to `main` automatically updates the live demo.
+Each particle snapshots the hyperparameter values at spawn time, so mid-run edits don't affect existing particles.
 
 ---
 
-## Project Structure
+## Deployment
 
+Single HTML file, no build step, no server, no dependencies.
+
+```bash
+# Clone and open locally
+git clone https://github.com/kavishka-dot/optimizer.git
+open optimizer/index.html
 ```
-sde_simulations/
-└── index.html      # Entire application — self-contained
-└── README.md
-```
+
+Or deploy to GitHub Pages by pushing `index.html` and enabling Pages in repository Settings.
+
+---
+
+## References
+
+- Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors. *Nature*.
+- Duchi, J., Hazan, E., & Singer, Y. (2011). Adaptive subgradient methods. *JMLR*.
+- Kingma, D. P., & Ba, J. (2015). Adam: A method for stochastic optimization. *ICLR*.
+- Liu, H., et al. (2023). Sophia: A scalable stochastic second-order optimizer. *arXiv:2305.14342*.
+- Chen, X., et al. (2023). Symbolic discovery of optimization algorithms. *arXiv:2302.06675*. (Lion)
 
 ---
 
 ## License
 
-MIT
+MIT © [Kavishka](https://github.com/kavishka-dot)
